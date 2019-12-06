@@ -1,6 +1,6 @@
 """Classes in this file tokenize input strings"""
 
-from errors import CustomException
+from pavdhutils.errors import CustomException
 import sys
 
 class Tokenize:

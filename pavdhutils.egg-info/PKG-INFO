@@ -1,0 +1,16 @@
+Metadata-Version: 2.1
+Name: pavdhutils
+Version: 0.0.1
+Summary: Collection of utility scripts for DH research
+Home-page: none
+Author: Paul Vierthaler
+Author-email: vierth@gmail.com
+License: UNKNOWN
+Description: # PAV DH Utilities
+        This is a collection of scripts that can be used to aid analysis in digital humanities. It is mainly focused on text analysis, but will be expanded on in the future.
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Classifier: Development Status :: 2 - Pre-Alpha
+Description-Content-Type: text/markdown
