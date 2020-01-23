@@ -1,5 +1,6 @@
 """ Functions and classes in this file perform stylometric analysis """
-import re, os, sys, platform, json
+import re, os, sys, platform, json, matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -10,11 +11,11 @@ from pavdhutils.rename import c_rename
 class Stylometry:
     # The initialization method loads the corpus into memory from a folder
     def __init__(self, corpus_folder="corpus", tokenization_method="char", label_div="_",
-                label_types=('title', 'genre', 'era', 'author'),
-                color_value=1, label_value = 0,
+                label_types=('genre', 'title', 'era', 'author'),
+                color_value=0, label_value = 1,
                 file_extension=".txt", encoding="utf8", 
                 error_handling="ignore", cleaning=True, verbose=True,
-                renamefiles=True):
+                renamefiles=False):
 
         # save the metadata label types
         self.label_types = label_types
@@ -33,7 +34,7 @@ class Stylometry:
 
         # Iterate through each item in the folder and save 
         for root, dirs, files in os.walk(corpus_folder):
-            print(files)
+            
             if renamefiles:
                 templabels = c_rename(files)
             else:
@@ -51,7 +52,8 @@ class Stylometry:
                     tokens = Tokenize(text)
                     text = tokens.get_tokenized()
                     self.texts.append(text)
-
+        
+        print(self.labels[0])
     # Use sklearn's vectorizor to create a bag of words vectorizer. other 
     # options will be available in the future
     def vectorize(self, common_terms=500, ngrams=1, use_idf=False,
@@ -96,6 +98,7 @@ class Stylometry:
         self.explained_variance = pca.explained_variance_
         # generate plot info
         self.generate_plot_info()
+        print(self.pca)
 
     def pca_to_js(self,jsoutfile="data.js"):
         
@@ -147,11 +150,13 @@ class Stylometry:
                 wf.write("\n".join(stringlist))
 
 
-    def plot_pca(self, output_dim=(10,7), output_name=None, color_value="genre",
-                    label_value="title"):
+    def plot_pca(self, output_dim=(10,7), output_file=None, color_value="genre",
+                    label_value="title", hide_points=False, point_labels=False,
+                    plot_loadings=False, point_size=4):
+
 
         color_label_index = self.label_types.index(color_value)
-        
+        print(color_label_index)
         # Set the font
         if platform.system() == "Darwin":
             font = matplotlib.font_manager.FontProperties(fname="/System/Library/Fonts/STHeiti Medium.ttc")
@@ -166,23 +171,53 @@ class Stylometry:
         plt.figure(figsize=output_dim)
 
         # get unique values to generate a color pallette
-        unique_label_values = set()
+        # find all the unique values for each of the label types
+        unique_label_values = [set() for i in range(len(self.label_types))]
         for label_list in self.labels:
-            unique_label_values.add(label_list[color_label_index])
-
-        # make this a list to fix the order
-        unique_label_values = list(unique_label_values)
-
-        # create a color dicitonary for the labels with seaborn
-        color_dictionary = dict(zip(unique_label_values,
-                                sns.color_pallette("husl", 
-                                len(unique_label_values)).as_hex()))
-
+            for i, label in enumerate(label_list):
+                unique_label_values[i].add(label)
+    
+        # get unique labels
+        unique_color_labels = list(unique_label_values[color_label_index])
+        print(unique_color_labels)
         # get integers for the labels to allow for numpy filtering
-        label_integer = [i for i in range(len(unique_label_values))]
+        label_integer = [i for i in range(len(unique_color_labels))]
 
-        label_to_integer = dict(zip(unique_label_values, label_integer))
-
+        label_to_integer = dict(zip(unique_color_labels, label_integer))
+        print(label_to_integer)
         texts_with_integer_label = np.array(label_to_integer[label[color_label_index]] for label in self.labels)
+        print(label_to_integer[label[color_label_index]] for label in self.labels)
+        colors = [self.color_dictionaries[color_label_index][label] for label in unique_color_labels]
 
-        colors = [color_dictionary[label] for label in unique_label_values]
+        if hide_points:
+            point_size = 0
+        
+        ###################
+        # Create the plot #
+        ###################
+        print(self.pca)
+        print("Plotting texts")
+        for c, label_number, color_label in zip(colors, label_integer, unique_color_labels):
+            plt.scatter(self.pca[texts_with_integer_label==label_number,0],self.pca[texts_with_integer_label==label_number,1],label=color_label,c=c, s=point_size)
+            print(self.pca[texts_with_integer_label==label_number,0])
+            print(texts_with_integer_label, label_number)
+        # Let's label individual points so we know WHICH document they are
+        if point_labels:
+            print("Adding Labels")
+            for lab, datapoint in zip(labels, self.pca):
+                plt.annotate(str(lab[labelValue]),xy=datapoint)
+
+        # Let's graph component loadings
+        if plot_loadings:
+            print("Rendering Loadings")    
+            for i, word in enumerate(self.vocab):
+                plt.annotate(word, xy=(self.loadings[0, i], self.loadings[1,i]))
+            
+
+        # Let's add a legend! matplotlib will make this for us based on the data we 
+        # gave the scatter function.
+        plt.legend()
+        if output_file:
+            plt.savefig(output_file)
+        else:
+            plt.show()

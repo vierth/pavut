@@ -20,15 +20,15 @@ class Tokenize:
             if removewhitespace:
                 self.tokens_ = list(text.replace(" ", ""))
             else:
-                self.tokens_ = list(text.replace(" ", ""))
+                self.tokens_ = list(text)
 
         # elif method == "word":
-        #     if lang == "ch":
+        #     if lang == "zh":
         #         print("No word tokenization yet")
         #         sys.exit()
         #     elif lang == "en":
 
-    def ngrams(self, n=2, gram_div=""):
+    def ngrams(self, n=1, gram_div=""):
         self.ngrams_ = [gram_div.join(self.tokens_[i:i+n]) for i in 
                         range(len(self.tokens_)-(n-1))]
 
@@ -38,6 +38,9 @@ class Tokenize:
     def get_ngrams(self):
         return self.ngrams_
 
+    def get_ngrams_string(self, div=" "):
+        return div.join(self.ngrams_)
+
     def get_tokenized(self, version="tokens"):
         if version == "tokens":
             return " ".join(self.tokens_)
@@ -45,7 +48,7 @@ class Tokenize:
             try:
                 return " ".join(self.ngrams_)
             except AttributeError:
-                print("No ngrams found yet, returning bigrams by default")
+                print("No ngrams found yet, returning one grams by default")
                 self.ngrams(2)
                 return " ".join(self.ngrams_)
 

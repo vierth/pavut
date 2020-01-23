@@ -8,11 +8,11 @@ toremove = ['』','。', '！', '，', '：', '、', '（', '）', '；', '？',
 def clean(content,remove=toremove,delwhitespace=True,extrarem="~BREAK~"):
     # These two lines are useful for Chinese texts where there was no whitespace or punctuation
     # in the original documents
+    
     if delwhitespace:
         content = re.sub('\s+', '', content)
     if extrarem in content:
         content = content.remove(extrarem, '')
     for item in remove:
-        if item in content:
-            content = content.replace(item, "")
+        content = content.replace(item, "")
     return content
